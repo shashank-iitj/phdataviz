@@ -3,17 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Producthunt Data Visualization</title>
-
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-    <link href="css/index.css" type="text/css" rel="stylesheet">
-    <!--<link rel="stylesheet" href="//rawgithub.com/Caged/d3-tip/master/examples/example-styles.css">-->
-    <meta name="theme-color" content="#4A90E2">
     <link rel="stylesheet" href="//rawgithub.com/Caged/d3-tip/master/examples/example-styles.css">
+    <link href="css/index.css" type="text/css" rel="stylesheet">
+    <meta name="theme-color" content="#4A90E2">
 </head>
 
 <body>
 <div class="container">
-    <section class="sidebar left"></section>
+    <section class="sidebar left">
+        <i class="fa fa-filter"></i><span class="bold">Filters</span>
+        <ul>
+            <li><i class="fa fa-circle-o daycheck active"></i>Monday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Tuesday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Wednesday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Thursday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Friday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Saturday</li>
+            <li><i class="fa fa-circle-o daycheck"></i>Sunday</li>
+        </ul>
+    </section>
     <section class="map"></section>
     <section class="sidebar right">
         <div class="chart"></div>

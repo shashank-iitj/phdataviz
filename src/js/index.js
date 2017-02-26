@@ -112,7 +112,7 @@ var view = {
             // set the dimensions and margins of the graph
             var width = document.querySelector(selector).clientWidth;
             var height = document.querySelector(selector).clientHeight;
-            var margin = {top: 20, right: 20, bottom: 30, left: 40},
+            var margin = {top: 20, right: 50, bottom: 30, left: 40},
                 width = width - margin.left - margin.right,
                 height = height - margin.top - margin.bottom;
 

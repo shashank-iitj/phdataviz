@@ -1,5 +1,18 @@
+@charset "UTF-8";
+@import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,900");
+
 body {
     height: 100vh;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.bold {
+    font-weight: bold;
 }
 
 .container {
@@ -8,16 +21,41 @@ body {
     height: 100vh;
 }
 
-.sidebar {
-    width: 25vw;
-}
 
 .map {
     width: 50vw;
+    padding: 2em;
+    border-right: 2px solid #E6E6E6;
+}
+
+.sidebar {
+
+}
+
+.sidebar.left {
+    border-right: 2px solid #E6E6E6;
+    box-sizing: border-box;
+    padding: 2em;
+    width: 20vw;
+}
+
+.sidebar.left .fa-filter {
+    padding: 1em;
+}
+
+.sidebar.left ul li {
+    padding: 1em;
+    cursor: pointer;
+}
+
+.sidebar.left ul .daycheck {
+    margin-right: 1em;
 }
 
 .sidebar.right .chart {
     height: 60vh;
+    padding: 2em;
+    width: 30vw;
 }
 
 /* D3 Styling */
