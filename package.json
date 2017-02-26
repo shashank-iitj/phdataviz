@@ -1,0 +1,30 @@
+{
+  "name": "producthunt-data-viz",
+  "version": "1.0.0",
+  "description": "Geographic visualization of launches of different days of the week",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shashank-iitj/ProducthuntDataViz.git"
+  },
+  "keywords": [
+    "udacity",
+    "node",
+    "data",
+    "analysis",
+    "nanodegree"
+  ],
+  "author": "Shashank Kumar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shashank-iitj/ProducthuntDataViz/issues"
+  },
+  "homepage": "https://github.com/shashank-iitj/ProducthuntDataViz#readme",
+  "devDependencies": {
+    "browser-sync": "^2.11.1",
+    "gulp": "^3.9.1"
+  }
+}

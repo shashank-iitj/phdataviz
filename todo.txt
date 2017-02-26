@@ -1,0 +1,5 @@
+Work on the styling of Platforms
+Colored circle using font-awesome, later to be replaced by D3 circle
+Start working on skeleton of right sidebar
+
+Merge main.css and style.css

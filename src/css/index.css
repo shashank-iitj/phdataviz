@@ -1,0 +1,29 @@
+body {
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 25vw;
+}
+
+.map {
+    width: 50vw;
+}
+
+.sidebar.right .chart {
+    height: 60vh;
+}
+
+/* D3 Styling */
+.bar { fill: steelblue; }
+
+.land {
+    fill: #fff;
+    stroke: #D7D7D7;
+}
