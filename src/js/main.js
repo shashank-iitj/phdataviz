@@ -7,12 +7,12 @@
         init: function () {
             // load PH Data
             // Process and Transform Data like this
-            this.productsByDay = {};
-            this.productFrequency = {};
+            this.individualProductsByDay = {};
+            this.overallAverage = {};
             for (var i = 0; i < days.length; i++) {
                 var day = days[i];
-                this.productsByDay[day] = [];
-                this.productFrequency[day] = {
+                this.individualProductsByDay[day] = [];
+                this.overallAverage[day] = {
                     products: 0,
                     votes: 0,
                     comments: 0
@@ -36,7 +36,7 @@
 
                         var day = item["weekday"];
                         var name = item["name"];
-                        model.productsByDay[day].push({
+                        model.individualProductsByDay[day].push({
                             id: item["id"],
                             name: name,
                             lat: item["lat"],
@@ -45,9 +45,9 @@
                             day: item["weekday"]
                         });
 
-                        model.productFrequency[day].products += 1;
-                        model.productFrequency[day].votes += item["votes_count"];
-                        model.productFrequency[day].comments += item["comments_count"];
+                        model.overallAverage[day].products += 1;
+                        model.overallAverage[day].votes += item["votes_count"];
+                        model.overallAverage[day].comments += item["comments_count"];
 
                         dateSet.add(item['date'])
                     }
@@ -56,11 +56,11 @@
                     // Average out the votes and comments count
                     for (var i = 0; i < days.length; i++) {
                         var dayOfWeek = days[i];
-                        model.productFrequency[dayOfWeek].votes = model.productFrequency[dayOfWeek].votes / this.totalDays;
-                        model.productFrequency[dayOfWeek].comments = model.productFrequency[dayOfWeek].comments / this.totalDays;
+                        model.overallAverage[dayOfWeek].votes = model.overallAverage[dayOfWeek].votes / this.totalDays;
+                        model.overallAverage[dayOfWeek].comments = model.overallAverage[dayOfWeek].comments / this.totalDays;
                     }
 
-                    controller.dataLoadCallback();
+                    controller.render();
                 }
             });
         },
@@ -71,7 +71,7 @@
 
                 output.push({
                     day: day,
-                    value: model.productFrequency[day][key]
+                    value: model.overallAverage[day][key]
                 })
             }
             return output;
@@ -89,11 +89,11 @@
         },
         currentDayData: function () {
             return {
-                mapData: model.productsByDay[controller.currentDay],
+                mapData: model.individualProductsByDay[controller.currentDay],
                 sidebarData: model.getAverageData(controller.sidebarKey)
             };
         },
-        dataLoadCallback: function () {
+        render: function () {
             view.init();
         },
         selectDay: function (day) {

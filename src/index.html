@@ -25,15 +25,49 @@
     </section>
     <section class="map"></section>
     <section class="sidebar right">
+        <div class="selection">
+            <div class="keys">
+                <div class="key">Votes</div>
+                <div class="key">Comments</div>
+                <div class="key"># Products</div>
+            </div>
+        </div>
         <div class="chart"></div>
+        <div class="info">
+            <div class="block">
+                <div class="item">
+                    <div class="content">
+                        <div class="icon"><i class="fa fa-comment daycheck"></i></div>
+                        <div class="value" id="products">123</div>
+                        <div class="subtitle">Products</div>
+                    </div>
+                </div>
+            </div>
+            <div class="block">
+                <div class="item">
+                    <div class="content">
+                        <div class="icon"><i class="fa fa-comment daycheck"></i></div>
+                        <div class="value" id="votes">123</div>
+                        <div class="subtitle">Votes</div>
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="content">
+                        <div class="icon"><i class="fa fa-circle-o daycheck"></i></div>
+                        <div class="value" id="comments">123</div>
+                        <div class="subtitle">Comments</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 </div>
 
-<!-- load the d3.js library -->
 <script src="js/d3.v4.min.js"></script>
 <script src="js/d3-tip.js"></script>
 <script src="js/topojson.v1.min.js"></script>
 <script src="js/papaparse.min.js"></script>
+<script src="js/jquery-3.1.1.min.js"></script>
 <script src="js/index.js"></script>
 </body>
 </html>

@@ -13,75 +13,110 @@ var dayColors = {
 var model = {
     init: function () {
         // load PH Data
-        // Process and Transform Data like this
-        this.productsByDay = {};
-        this.productFrequency = {};
+        // Dictionary | Key: Day of the week, Value: Array of products launched by day of the week
+        this.individualProductsByDay = {};
+        // Dictionary | Key: Day of the week, Value: Array to total number of products launched on a particular date on that day of the Week
+        this.productsLaunchedPerDayBreakdown = {};
+        // Dictionary | Key: Metric, Value: Array of Median number of metric on each day of week
+        this.medianData = {
+            votes: [],
+            comments: [],
+            numberOfProducts: []
+        };
+
         for (var i = 0; i < days.length; i++) {
             var day = days[i];
-            this.productsByDay[day] = [];
-            this.productFrequency[day] = {
-                products: 0,
-                votes: 0,
-                comments: 0
-            };
+            this.individualProductsByDay[day] = [];
+            this.productsLaunchedPerDayBreakdown[day] = [];
         }
 
         Papa.parse("data/ph_products.csv", {
             download: true,
             dynamicTyping: true,
-            complete: function (results) {
-                var headers = ["", "id", "name", "category_id", "votes_count",
-                    "comments_count", "date", "weekday", "created_at",
-                    "country", "country_iso", "lat", "lng"];
-                let dateSet = new Set();
-                for (var i = 1; i < results.data.length; i++) {
-                    var item = {};
-                    var row = results.data[i];
-                    for (var index = 1; index < headers.length; index++) {
-                        item[headers[index]] = row[index];
-                    }
-
-                    var day = item["weekday"];
-                    var name = item["name"];
-                    model.productsByDay[day].push({
-                        id: item["id"],
-                        name: name,
-                        lat: item["lat"],
-                        lng: item["lng"],
-                        votes: item["votes_count"],
-                        day: item["weekday"]
-                    });
-
-                    model.productFrequency[day].products += 1;
-                    model.productFrequency[day].votes += item["votes_count"];
-                    model.productFrequency[day].comments += item["comments_count"];
-
-                    dateSet.add(item['date'])
-                }
-
-                this.totalDays = dateSet.size - 1;
-                // Average out the votes and comments count
-                for (var i = 0; i < days.length; i++) {
-                    var dayOfWeek = days[i];
-                    model.productFrequency[dayOfWeek].votes = model.productFrequency[dayOfWeek].votes / this.totalDays;
-                    model.productFrequency[dayOfWeek].comments = model.productFrequency[dayOfWeek].comments / this.totalDays;
-                }
-
-                controller.dataLoadCallback();
-            }
+            complete: model.processCsv
         });
     },
-    getAverageData: function (key) {
-        var output = [];
-        for (var i = 0; i < days.length; i++) {
-            var day = days[i];
+    processCsv: function (results) {
+        var headers = ["", "id", "name", "category_id", "votes_count",
+            "comments_count", "date", "weekday", "created_at",
+            "country", "country_iso", "lat", "lng"];
 
-            output.push({
-                day: day,
-                value: model.productFrequency[day][key]
-            })
+        // Dictionary | Key: Date, Value: Day of the week
+        var dateDayDict = {};
+        // Dictionary | Key: Date, Value: Total products on that date
+        var productsPerDate = {};
+
+        let dateSet = new Set();
+        for (var i = 1; i < results.data.length; i++) {
+            var item = {};
+            var row = results.data[i];
+            for (var index = 1; index < headers.length; index++) {
+                item[headers[index]] = row[index];
+            }
+
+            var day = item["weekday"];
+            var name = item["name"];
+            var date = item['date'];
+
+            model.individualProductsByDay[day].push({
+                id: item["id"],
+                name: name,
+                lat: item["lat"],
+                lng: item["lng"],
+                votes: item["votes_count"],
+                comments: item["comments_count"],
+                day: item["weekday"]
+            });
+
+            // Add Date to the Set
+            dateSet.add(date);
+            // DateDayDict
+            dateDayDict[date] = item['weekday'];
+
+            // Increment the number of product launched on that day
+            if (!productsPerDate.hasOwnProperty(date)) {
+                productsPerDate[date] = 0;
+            }
+            productsPerDate[date] += 1;
         }
-        return output;
+
+        for (var it = dateSet.values(), date = null; date = it.next().value;) {
+            var productsLaunchedOnDate = productsPerDate[date];
+            var dayOftheDate = dateDayDict[date];
+            model.productsLaunchedPerDayBreakdown[dayOftheDate].push(productsLaunchedOnDate)
+        }
+
+        // Median Data
+        for (var i = 0; i < days.length; i++) {
+            var dayOfWeek = days[i];
+            model.medianData.numberOfProducts.push({
+                day: dayOfWeek,
+                value: d3.median(model.productsLaunchedPerDayBreakdown[dayOfWeek])
+            });
+
+            var mediaVotesOnDay = d3.median(model.individualProductsByDay[dayOfWeek], function (d) {
+                return d.votes
+            });
+
+            model.medianData.votes.push({
+                day: dayOfWeek,
+                value: mediaVotesOnDay
+            });
+
+            var mediaCommentsOnDay = d3.median(model.individualProductsByDay[dayOfWeek], function (d) {
+
+                return d.comments
+            });
+
+            model.medianData.comments.push({
+                day: dayOfWeek,
+                value: mediaCommentsOnDay
+            });
+        }
+
+        this.totalDays = dateSet.size - 1;
+
+        controller.dataLoad();
     }
 };
 
@@ -89,20 +124,59 @@ var controller = {
     init: function () {
         controller.currentDay = days[new Date().getDay()];
         controller.sidebarKey = "votes";
-
         model.init();
     },
-    dataLoadCallback: function () {
-        var mapData = model.productsByDay[controller.currentDay];
-        var chartData = model.getAverageData(controller.sidebarKey);
-        view.init(mapData, chartData);
+    dataLoad: function () {
+        var mapData = model.individualProductsByDay[controller.currentDay];
+        var medianDataByDay = {
+            votes: model.medianData['votes'],
+            comments: model.medianData['comments'],
+            numberOfProducts: model.medianData['numberOfProducts']
+        };
+        var chartData = medianDataByDay[controller.sidebarKey];
+
+        var dayIndex = days.indexOf(controller.currentDay);
+        var contentData = {
+            numberOfProducts: medianDataByDay.numberOfProducts[dayIndex].value,
+            votes: medianDataByDay.votes[dayIndex].value,
+            comments: medianDataByDay.comments[dayIndex].value
+        };
+        view.init(mapData, chartData, contentData);
+    },
+    render: function () {
+        var mapData = model.individualProductsByDay[controller.currentDay];
+        var medianDataByDay = {
+            votes: model.medianData['votes'],
+            comments: model.medianData['comments'],
+            numberOfProducts: model.medianData['numberOfProducts']
+        };
+
+        var dayIndex = days.indexOf(controller.currentDay);
+        var contentData = {
+            numberOfProducts: medianDataByDay.numberOfProducts[dayIndex].value,
+            votes: medianDataByDay.votes[dayIndex].value,
+            comments: medianDataByDay.comments[dayIndex].value
+        };
+        view.render(mapData, contentData);
+    },
+    update: {
+        dayOfWeek: function (dayOfWeek) {
+            controller.currentDay = dayOfWeek;
+            controller.render();
+        }
     }
 };
 
 var view = {
-    init: function (mapData, chartData) {
+    init: function (mapData, chartData, contentData) {
         view.map.init(".map", mapData);
         view.sidebar.init(".sidebar.right .chart", chartData);
+        view.content.init(contentData);
+        view.filter.init();
+    },
+    render: function (mapData, contentData) {
+        view.map.render(mapData);
+        view.content.render(contentData);
     },
     sidebar: {
         init: function (selector, data) {
@@ -122,7 +196,6 @@ var view = {
                 .padding(0.1);
             var y = d3.scaleLinear()
                 .range([height, 0]);
-
 
             var svg = d3.select(selector).append("svg")
                 .attr("width", width + margin.left + margin.right)
@@ -238,6 +311,27 @@ var view = {
                 })
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
+                .exit()
+                .remove();
+        }
+    },
+    content: {
+        init: function (data) {
+            this.render(data);
+        },
+        render: function (data) {
+            document.querySelector("#products").innerHTML = data.numberOfProducts;
+            document.querySelector("#votes").innerHTML = data.votes;
+            document.querySelector("#comments").innerHTML = data.comments;
+        }
+    },
+    // Event listener for day select and metric select
+    filter: {
+        init: function () {
+            $(".sidebar.left li").click(function (e) {
+               var dayOfWeekSelected = e.target.textContent;
+               controller.update.dayOfWeek(dayOfWeekSelected);
+            });
         }
     }
 };
