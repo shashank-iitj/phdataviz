@@ -4,7 +4,7 @@ var dayColors = {
     "Monday": "#1976D2",
     "Tuesday": "#2196F3",
     "Wednesday": "#BBDEFB",
-    "Thursday": "#FFFFFF",
+    "Thursday": "#FAA613",
     "Friday": "#4CAF50",
     "Saturday": "#49d5a2",
     "Sunday": "#fa436b"
@@ -123,7 +123,7 @@ var model = {
 var controller = {
     init: function () {
         controller.currentDay = days[new Date().getDay()];
-        controller.sidebarKey = "votes";
+        controller.sidebarKey = "numberOfProducts";
         model.init();
     },
     dataLoad: function () {
@@ -133,6 +133,7 @@ var controller = {
             comments: model.medianData['comments'],
             numberOfProducts: model.medianData['numberOfProducts']
         };
+
         var chartData = medianDataByDay[controller.sidebarKey];
 
         var dayIndex = days.indexOf(controller.currentDay);
@@ -141,7 +142,7 @@ var controller = {
             votes: medianDataByDay.votes[dayIndex].value,
             comments: medianDataByDay.comments[dayIndex].value
         };
-        view.init(mapData, chartData, contentData);
+        view.init(controller.currentDay, controller.sidebarKey, mapData, chartData, contentData);
     },
     render: function () {
         var mapData = model.individualProductsByDay[controller.currentDay];
@@ -151,44 +152,54 @@ var controller = {
             numberOfProducts: model.medianData['numberOfProducts']
         };
 
+        var chartData = medianDataByDay[controller.sidebarKey];
+
         var dayIndex = days.indexOf(controller.currentDay);
         var contentData = {
             numberOfProducts: medianDataByDay.numberOfProducts[dayIndex].value,
             votes: medianDataByDay.votes[dayIndex].value,
             comments: medianDataByDay.comments[dayIndex].value
         };
-        view.render(mapData, contentData);
+        view.render(controller.currentDay, mapData, chartData, contentData);
     },
     update: {
         dayOfWeek: function (dayOfWeek) {
             controller.currentDay = dayOfWeek;
+            controller.render();
+        },
+        metric: function (metric) {
+            controller.sidebarKey = metric;
             controller.render();
         }
     }
 };
 
 var view = {
-    init: function (mapData, chartData, contentData) {
+    init: function (currentDay, metric, mapData, chartData, contentData) {
         view.map.init(".map", mapData);
-        view.sidebar.init(".sidebar.right .chart", chartData);
-        view.content.init(contentData);
-        view.filter.init();
+        view.sidebar.init(currentDay, ".sidebar.right .chart", chartData);
+        view.content.init(currentDay, contentData);
+        view.filter.init(currentDay);
+        view.metric.init(metric);
     },
-    render: function (mapData, contentData) {
+    render: function (currentDay, mapData, chartData, contentData) {
         view.map.render(mapData);
-        view.content.render(contentData);
+        view.content.render(currentDay, contentData);
+        view.sidebar.render(currentDay, ".sidebar.right .chart", chartData);
+        view.filter.update(currentDay);
+        view.sidebar.update(currentDay);
     },
     sidebar: {
-        init: function (selector, data) {
-            this.render(selector, data);
+        init: function (day, selector, data) {
+            view.sidebar.width = document.querySelector(selector).clientWidth;
+            view.sidebar.height = document.querySelector(selector).clientHeight;
+            this.render(day, selector, data);
         },
-        render: function (selector, data) {
+        render: function (currentDay, selector, data) {
             // set the dimensions and margins of the graph
-            var width = document.querySelector(selector).clientWidth;
-            var height = document.querySelector(selector).clientHeight;
             var margin = {top: 20, right: 50, bottom: 30, left: 40},
-                width = width - margin.left - margin.right,
-                height = height - margin.top - margin.bottom;
+                width = view.sidebar.width - margin.left - margin.right,
+                height = view.sidebar.height - margin.top - margin.bottom;
 
             // set the ranges
             var x = d3.scaleBand()
@@ -197,6 +208,7 @@ var view = {
             var y = d3.scaleLinear()
                 .range([height, 0]);
 
+            document.querySelector(selector).innerHTML = '';
             var svg = d3.select(selector).append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -218,6 +230,9 @@ var view = {
                 .data(data)
                 .enter().append("rect")
                 .attr("class", "bar")
+                .attr("data-day", function (d) {
+                    return d.day
+                })
                 .attr("x", function (d) {
                     return x(d.day);
                 })
@@ -227,6 +242,17 @@ var view = {
                 })
                 .attr("height", function (d) {
                     return height - y(d.value);
+                })
+                .attr("fill", function (d) {
+                    if (d.day == currentDay) {
+                        console.log(currentDay);
+                        return dayColors[currentDay];
+                    }
+                    return "#ccc";
+                })
+                .on('mouseover', function (d) {
+                    controller.update.dayOfWeek(d.day);
+                    view.sidebar.update(d.day);
                 });
 
             // add the x Axis
@@ -237,6 +263,15 @@ var view = {
             // add the y Axis
             svg.append("g")
                 .call(d3.axisLeft(y));
+        },
+        update: function (day) {
+            $(`.bar[data-day!=${day}]`).css({
+                fill: '#ccc'
+            });
+
+            $(`.bar[data-day=${day}]`).css({
+                fill: dayColors[day]
+            })
         }
     },
     map: {
@@ -290,13 +325,14 @@ var view = {
             /* Invoke the tip in the context of your visualization */
             view.map.svg.call(tip);
 
-            view.map.svg.append("g")
+            var circles = view.map.svg
                 .selectAll("circle")
                 .data(data, function (d) {
                     return d.id;
-                })
-                .enter()
-                .append("circle")
+                });
+
+            circles.exit().remove();
+            circles.enter().append("circle")
                 .attr("cx", function (d) {
                     return view.map.projection([d.lng, d.lat])[0];
                 })
@@ -309,6 +345,7 @@ var view = {
                 .attr("fill", function (d) {
                     return dayColors[d.day]
                 })
+                .attr("fill-opacity", "0.2")
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
                 .exit()
@@ -316,22 +353,64 @@ var view = {
         }
     },
     content: {
-        init: function (data) {
-            this.render(data);
+        init: function (currentDay, data) {
+            this.render(currentDay, data);
         },
-        render: function (data) {
+        render: function (currentDay, data) {
             document.querySelector("#products").innerHTML = data.numberOfProducts;
             document.querySelector("#votes").innerHTML = data.votes;
             document.querySelector("#comments").innerHTML = data.comments;
+            document.querySelector("#dayOfWeek").innerHTML = currentDay;
+
+            $("#dayOfWeek").css({
+                "color": dayColors[currentDay]
+            })
         }
     },
     // Event listener for day select and metric select
     filter: {
-        init: function () {
+        init: function (currentDay) {
+            for(var i=0; i < days.length; i++) {
+                var dayOfWeek = days[i];
+                $(".sidebar.left ul").append($(`<li data-day="${dayOfWeek}"><i class="fa fa-circle-o daycheck"></i>${dayOfWeek}</li>`))
+            }
             $(".sidebar.left li").click(function (e) {
-               var dayOfWeekSelected = e.target.textContent;
-               controller.update.dayOfWeek(dayOfWeekSelected);
+                var dayOfWeekSelected = e.target.textContent;
+                controller.update.dayOfWeek(dayOfWeekSelected);
+                view.filter.update(dayOfWeekSelected);
             });
+            view.filter.update(currentDay);
+        },
+        update: function (dayOfWeek) {
+            $(".sidebar.left li").css({
+                'background-color': '#ffffff'
+            });
+            $(`[data-day=${dayOfWeek}]`).css({
+                'background-color': dayColors[dayOfWeek]
+            });
+        }
+    },
+    metric: {
+        init: function (metric) {
+            $(".key").click(function (e) {
+                view.metric.render(e.target.dataset.key);
+            });
+            view.metric.style(metric);
+        },
+        render: function (metric) {
+            controller.update.metric(metric);
+            view.metric.style(metric);
+        },
+        style: function (metric) {
+            $(`.key[data-key!=${metric}]`).css({
+                "background-color": "#fff",
+                "color": "#000"
+            })
+            $(`.key[data-key=${metric}]`).css({
+                "background-color": "#FC375E",
+                "color": "#fff"
+            })
+
         }
     }
 };
