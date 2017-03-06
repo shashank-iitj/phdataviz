@@ -44,7 +44,9 @@ He also suggested a better layout to display the components.
 
 
 Mehul, a frontend developer suggested me to try flex layout to layout various components on the page easily and
-also suggested me to use icons for the metric which you see below the graph. 
+also suggested me to use icons for the metric which you see below the graph. He also suggested 
+to load the dates in left sidebar dynamically. You can see an older version index1.html using hardcoded dates.
+
 
 Morever my previous reviewer suggested to add title in charts. I have updated it in this review.
 Hope it counts as a feedback too :)
