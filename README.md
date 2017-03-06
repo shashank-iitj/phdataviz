@@ -6,8 +6,12 @@ I have added a small javascript library Papa Parse which to help parse the data 
 
 
 ## Summary
+
+####Launching your product on Producthunt, a popular site for startups to showcase their product on weekend makes more sense.
+
 This visualization is based on collecting data from Producthunt API from last year. The primary idea is to showcase the 
-subtle difference which happens if you launch a product on weekend vs weekdays.
+subtle difference which happens if you launch a product on weekend vs weekdays. Seeing the graph you would notice that 
+on weekends there are fewer products launched compared to weekdays but they receive more median votes.
  
 
 ## Design
@@ -25,6 +29,9 @@ a particular day from left sidebar, the map is updated with corresponding color.
 In order to give a summary of metrics of a particular day, I have computed and displayed medians 
 of 3 metrics viz. # of products launches, votes and comments.
 
+The map updates as a user hovers over various days on the graph. One can toggle between the number of Products
+launched and votes metric to clearing visualise the benefits on launching on weekend.
+
 
 ## Feedback
 Initially, I had just plotted the products on a geographical map and my friend Mayank pointed out,
@@ -34,6 +41,13 @@ product circle.
 
 The idea of choosing different colors came from my friend Vlad, who is a UX designer. I have implemented that as well.
 He also suggested a better layout to display the components.
+
+
+Mehul, a frontend developer suggested me to try flex layout to layout various components on the page easily and
+also suggested me to use icons for the metric which you see below the graph. 
+
+Morever my previous reviewer suggested to add title in charts. I have updated it in this review.
+Hope it counts as a feedback too :)
 
 
 ## Data Files

@@ -24,12 +24,14 @@ var model = {
             numberOfProducts: []
         };
 
+        // Initializing models with empty array for every day of the week
         for (var i = 0; i < days.length; i++) {
             var day = days[i];
             this.individualProductsByDay[day] = [];
             this.productsLaunchedPerDayBreakdown[day] = [];
         }
 
+        // A CSV parsing library to load and process the csv files and create models for rendering views later
         Papa.parse("data/ph_products.csv", {
             download: true,
             dynamicTyping: true,
@@ -46,6 +48,7 @@ var model = {
         // Dictionary | Key: Date, Value: Total products on that date
         var productsPerDate = {};
 
+        // Initializing dataSet to store the unique number of dates in the dataset
         let dateSet = new Set();
         for (var i = 1; i < results.data.length; i++) {
             var item = {};
@@ -80,6 +83,7 @@ var model = {
             productsPerDate[date] += 1;
         }
 
+        // Agreggating the products launched on each day of the week together
         for (var it = dateSet.values(), date = null; date = it.next().value;) {
             var productsLaunchedOnDate = productsPerDate[date];
             var dayOftheDate = dateDayDict[date];
@@ -89,11 +93,13 @@ var model = {
         // Median Data
         for (var i = 0; i < days.length; i++) {
             var dayOfWeek = days[i];
+            // Median number of products launched on each day of the week
             model.medianData.numberOfProducts.push({
                 day: dayOfWeek,
                 value: d3.median(model.productsLaunchedPerDayBreakdown[dayOfWeek])
             });
 
+            // Median votes received on each day of the week
             var mediaVotesOnDay = d3.median(model.individualProductsByDay[dayOfWeek], function (d) {
                 return d.votes
             });
@@ -103,6 +109,7 @@ var model = {
                 value: mediaVotesOnDay
             });
 
+            // Median comments received on each day of the week
             var mediaCommentsOnDay = d3.median(model.individualProductsByDay[dayOfWeek], function (d) {
 
                 return d.comments
@@ -114,28 +121,35 @@ var model = {
             });
         }
 
-        this.totalDays = dateSet.size - 1;
-
         controller.dataLoad();
     }
 };
 
+// This is the piece of the code which acts as the bridge between data aka models and the view
 var controller = {
     init: function () {
+        // We initialize the graph with sensible defaults like the current day of the week and metric in sidebar
+        // set as number of Products
         controller.currentDay = days[new Date().getDay()];
         controller.sidebarKey = "numberOfProducts";
         model.init();
     },
     dataLoad: function () {
+        // This function is called after the data set is successfully loaded and process. This function now
+        // prepares the data necessary for the view and initializes the view
+
+        // mapData is the data needed for the circular points on map to load
         var mapData = model.individualProductsByDay[controller.currentDay];
+
+        // chartData reprets the bar graphs rendered in the side.
         var medianDataByDay = {
             votes: model.medianData['votes'],
             comments: model.medianData['comments'],
             numberOfProducts: model.medianData['numberOfProducts']
         };
-
         var chartData = medianDataByDay[controller.sidebarKey];
 
+        // contentData represents the small crumbs of numberical information rendered below the bar charts
         var dayIndex = days.indexOf(controller.currentDay);
         var contentData = {
             numberOfProducts: medianDataByDay.numberOfProducts[dayIndex].value,
@@ -145,6 +159,8 @@ var controller = {
         view.init(controller.currentDay, controller.sidebarKey, mapData, chartData, contentData);
     },
     render: function () {
+        // This function is called when a user changes parameters on view and we need to render the visualisation again
+        // The mapData, chartData and contentData and refreshed and the visualisation is refreshed.
         var mapData = model.individualProductsByDay[controller.currentDay];
         var medianDataByDay = {
             votes: model.medianData['votes'],
@@ -163,6 +179,7 @@ var controller = {
         view.render(controller.currentDay, mapData, chartData, contentData);
     },
     update: {
+        // The view calls this function to toggel and update the chart
         dayOfWeek: function (dayOfWeek) {
             controller.currentDay = dayOfWeek;
             controller.render();
@@ -176,6 +193,7 @@ var controller = {
 
 var view = {
     init: function (currentDay, metric, mapData, chartData, contentData) {
+        // Initialises the various components of the chart
         view.map.init(".map", mapData);
         view.sidebar.init(currentDay, ".sidebar.right .chart", chartData);
         view.content.init(currentDay, contentData);
@@ -190,6 +208,7 @@ var view = {
         view.sidebar.update(currentDay);
     },
     sidebar: {
+        // Intitialises and loads the sidebar which contains the bar chart
         init: function (day, selector, data) {
             view.sidebar.width = document.querySelector(selector).clientWidth;
             view.sidebar.height = document.querySelector(selector).clientHeight;
@@ -209,6 +228,8 @@ var view = {
                 .range([height, 0]);
 
             document.querySelector(selector).innerHTML = '';
+
+            // creates and svg element which houses the bar chart with apt margins
             var svg = d3.select(selector).append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -225,7 +246,7 @@ var view = {
                 return d.value;
             })]);
 
-            // append the rectangles for the bar chart
+            // append the rectangles for the bar chart and render them with apt height
             svg.selectAll(".bar")
                 .data(data)
                 .enter().append("rect")
@@ -244,6 +265,7 @@ var view = {
                     return height - y(d.value);
                 })
                 .attr("fill", function (d) {
+                    // Highlight the current day with selected color and other with grey to bring focus to the current day
                     if (d.day == currentDay) {
                         console.log(currentDay);
                         return dayColors[currentDay];
@@ -276,7 +298,8 @@ var view = {
     },
     map: {
         init: function (selector, data) {
-            // TODO: remove hardcoding
+            // This initialized the plain map which will be later used for plotting the products on the map
+            // TODO: remove hardcoding, it can be made responsive by considering remaining space and maintaining aspect ratio
             var width = 950;
             var height = 500;
 
@@ -310,19 +333,20 @@ var view = {
             })
         },
         render: function (data) {
+            // The products are plotted on the map with radius proportional to the number of votes received
             var votesRange = d3.extent(data, function (d) {
                 return d.votes
             });
             var votesScale = d3.scaleLinear().range([2, 10]).domain(votesRange);
 
-            /* Initialize tooltip */
+            // Initialize tooltip
             var tip = d3.tip()
                 .attr('class', 'd3-tip')
                 .html(function (d) {
                     return d.name + "<br>Votes: " + d.votes;
                 });
 
-            /* Invoke the tip in the context of your visualization */
+            // Invoke the tip in the context of your visualization
             view.map.svg.call(tip);
 
             var circles = view.map.svg
@@ -332,6 +356,7 @@ var view = {
                 });
 
             circles.exit().remove();
+            // The circles are plotted at correct location corresponding to their lat and long
             circles.enter().append("circle")
                 .attr("cx", function (d) {
                     return view.map.projection([d.lng, d.lat])[0];
@@ -343,6 +368,7 @@ var view = {
                     return votesScale(d.votes)
                 })
                 .attr("fill", function (d) {
+                    // The circles which represents products are colored with respective to day of the week
                     return dayColors[d.day]
                 })
                 .attr("fill-opacity", "0.2")
@@ -353,6 +379,7 @@ var view = {
         }
     },
     content: {
+        // This updates the day and the corresponding numerical data
         init: function (currentDay, data) {
             this.render(currentDay, data);
         },
@@ -367,8 +394,8 @@ var view = {
             })
         }
     },
-    // Event listener for day select and metric select
     filter: {
+        // Event listener for day select and metric select
         init: function (currentDay) {
             for(var i=0; i < days.length; i++) {
                 var dayOfWeek = days[i];
@@ -382,6 +409,7 @@ var view = {
             view.filter.update(currentDay);
         },
         update: function (dayOfWeek) {
+            // Updates the css to highlight the selected ay with corresponding color and leave others in normal state
             $(".sidebar.left li").css({
                 'background-color': '#ffffff'
             });
@@ -391,6 +419,7 @@ var view = {
         }
     },
     metric: {
+        // Event listener for toggling between various metrics like Number of Products, Votes and comments
         init: function (metric) {
             $(".key").click(function (e) {
                 view.metric.render(e.target.dataset.key);
@@ -405,12 +434,14 @@ var view = {
             $(`.key[data-key!=${metric}]`).css({
                 "background-color": "#fff",
                 "color": "#000"
-            })
+            });
+
             $(`.key[data-key=${metric}]`).css({
                 "background-color": "#FC375E",
                 "color": "#fff"
-            })
+            });
 
+            $('.metricKey').text(metric);
         }
     }
 };

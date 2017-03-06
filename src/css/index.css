@@ -20,11 +20,14 @@ ul {
     height: 100vh;
 }
 
-.map {
+.mapContainer {
     width: 50vw;
     padding: 2em;
     border-right: 2px solid #E6E6E6;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 
@@ -56,8 +59,9 @@ ul {
 
 .sidebar .selection {
     display: flex;
-    justify-content: center;
-    height: 10vh;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 0 15vh;
 }
 
 .sidebar .selection .keys {
@@ -79,13 +83,11 @@ ul {
 
 .sidebar.right .chart {
     height: 50vh;
-    padding: 2em;
     width: 30vw;
 }
 
 .sidebar.right .info {
     height: 30vw;
-    padding: 1em;
 }
 
 .info {
