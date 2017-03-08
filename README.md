@@ -52,6 +52,8 @@ to load the dates in left sidebar dynamically. You can see an older version inde
 Morever my previous reviewer suggested to add title in charts. I have updated it in this review.
 Hope it counts as a feedback too :)
 
+#### Old index.html files are in "old/" directory of repo.
+
 
 ## Data Files
 Data File is in src/data directory name "ph_products.csv"
